@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-900">
+        <canvas id="fireworksCanvas" class="fixed top-0 left-0 w-full h-full pointer-events-none"></canvas>
+
     <div class="max-w-lg mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
         <h2 class="text-2xl font-bold text-center">Smart Budgeting App</h2>
         <p class="text-center text-gray-600">Prioritize Essentials, Use Public Transport, Eat at Home, and Track Expenses</p>
@@ -61,6 +63,13 @@
     
     <script>
         $(document).ready(function() {
+
+              const fireworks = new Fireworks.default(document.getElementById('fireworksCanvas'));
+            fireworks.start();
+            setTimeout(() => fireworks.stop(), 3000);
+
+
+            
             let total = parseFloat(localStorage.getItem("totalSpent")) || 0;
             let availableBalance = parseFloat(localStorage.getItem("availableBalance")) || 0;
             let daysRemaining = parseInt(localStorage.getItem("daysRemaining")) || 0;
