@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Budgeting App</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 400px; margin: auto; }
+        input, select, button { width: 100%; margin: 5px 0; padding: 8px; }
+        table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .total { font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Smart Budgeting App</h2>
+        <p>Prioritize Essentials, Use Public Transport, Eat at Home, and Track Expenses</p>
+        <input type="number" id="availableBalance" placeholder="Enter Available Balance">
+        <label>From Date: <input type="date" id="fromDate"></label>
+        <label>To Date: <input type="date" id="toDate"></label>
+        <button id="setBalance">Set Balance</button>
+        <p class="total">Available Balance: ₹<span id="currentBalance">0</span></p>
+        <p class="total">Days Remaining: <span id="daysRemaining">0</span></p>
+        <p class="total">Daily Spend Limit: ₹<span id="dailyLimit">0</span></p>
+        <input type="text" id="expenseName" placeholder="Expense Name">
+        <input type="number" id="expenseAmount" placeholder="Amount">
+        <select id="expenseCategory">
+            <option value="Essentials">Essentials</option>
+            <option value="Public Transport">Public Transport</option>
+            <option value="Eat at Home">Eat at Home</option>
+            <option value="Other">Other</option>
+        </select>
+        <button id="addExpense">Add Expense</button>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Amount</th>
+                    <th>Category</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="expenseList"></tbody>
+        </table>
+        <p class="total">Total Spent: ₹<span id="totalAmount">0</span></p>
+    </div>
+    
+    <script>
+        $(document).ready(function() {
+            let total = 0;
+            let availableBalance = 0;
+            let daysRemaining = 0;
+            
+            function updateDaysRemaining() {
+                let fromDate = new Date($('#fromDate').val());
+                let toDate = new Date($('#toDate').val());
+                if (!isNaN(fromDate) && !isNaN(toDate) && toDate > fromDate) {
+                    daysRemaining = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24));
+                    $('#daysRemaining').text(daysRemaining);
+                    localStorage.setItem("daysRemaining", daysRemaining);
+                    updateDailyLimit();
+                }
+            }
+            
+            function updateDailyLimit() {
+                if (daysRemaining > 0) {
+                    let dailyLimit = availableBalance / daysRemaining;
+                    $('#dailyLimit').text(dailyLimit.toFixed(2));
+                } else {
+                    $('#dailyLimit').text("0");
+                }
+            }
+            
+            if (localStorage.getItem("availableBalance")) {
+                availableBalance = parseFloat(localStorage.getItem("availableBalance"));
+                $('#currentBalance').text(availableBalance.toFixed(2));
+            }
+            
+            if (localStorage.getItem("totalSpent")) {
+                total = parseFloat(localStorage.getItem("totalSpent"));
+                $('#totalAmount').text(total.toFixed(2));
+            }
+            
+            if (localStorage.getItem("daysRemaining")) {
+                daysRemaining = parseInt(localStorage.getItem("daysRemaining"));
+                $('#daysRemaining').text(daysRemaining);
+            }
+            
+            if (localStorage.getItem("expenseList")) {
+                $('#expenseList').html(localStorage.getItem("expenseList"));
+            }
+            
+            updateDailyLimit();
+            
+            $('#setBalance').click(function() {
+                availableBalance = parseFloat($('#availableBalance').val());
+                if (!isNaN(availableBalance) && availableBalance >= 0) {
+                    $('#currentBalance').text(availableBalance.toFixed(2));
+                    localStorage.setItem("availableBalance", availableBalance);
+                }
+                updateDaysRemaining();
+            });
+            
+            $('#fromDate, #toDate').change(updateDaysRemaining);
+            
+            $('#addExpense').click(function() {
+                let name = $('#expenseName').val();
+                let amount = parseFloat($('#expenseAmount').val());
+                let category = $('#expenseCategory').val();
+                
+                if (name && amount > 0 && amount <= availableBalance) {
+                    let newExpense = 
+                        `<tr>
+                            <td>${name}</td>
+                            <td>₹${amount.toFixed(2)}</td>
+                            <td>${category}</td>
+                            <td><button class="delete">Delete</button></td>
+                        </tr>`;
+                    
+                    $('#expenseList').append(newExpense);
+                    total += amount;
+                    availableBalance -= amount;
+                    
+                    $('#totalAmount').text(total.toFixed(2));
+                    $('#currentBalance').text(availableBalance.toFixed(2));
+                    
+                    localStorage.setItem("availableBalance", availableBalance);
+                    localStorage.setItem("totalSpent", total);
+                    localStorage.setItem("expenseList", $('#expenseList').html());
+                    
+                    $('#expenseName').val('');
+                    $('#expenseAmount').val('');
+                    
+                    updateDailyLimit();
+                }
+            });
+            
+            $(document).on('click', '.delete', function() {
+                let amount = parseFloat($(this).closest('tr').find('td:nth-child(2)').text().replace('₹', ''));
+                total -= amount;
+                availableBalance += amount;
+                
+                $('#totalAmount').text(total.toFixed(2));
+                $('#currentBalance').text(availableBalance.toFixed(2));
+                
+                $(this).closest('tr').remove();
+                
+                localStorage.setItem("availableBalance", availableBalance);
+                localStorage.setItem("totalSpent", total);
+                localStorage.setItem("expenseList", $('#expenseList').html());
+                
+                updateDailyLimit();
+            });
+        });
+    </script>
+</body>
+</html>
