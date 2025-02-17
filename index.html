@@ -13,6 +13,7 @@
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f4f4f4; }
         .total { font-weight: bold; margin-top: 10px; }
+        .footer { text-align: center; margin-top: 20px; padding: 10px; background: #f4f4f4; }
     </style>
 </head>
 <body>
@@ -56,11 +57,22 @@
         <p class="total">Total Spent: ₹<span id="totalAmount">0</span></p>
     </div>
     
+    <div class="footer">Developed by Swatam</div>
+    
     <script>
         $(document).ready(function() {
-            let total = 0;
-            let availableBalance = 0;
-            let daysRemaining = 0;
+            let total = parseFloat(localStorage.getItem("totalSpent")) || 0;
+            let availableBalance = parseFloat(localStorage.getItem("availableBalance")) || 0;
+            let daysRemaining = parseInt(localStorage.getItem("daysRemaining")) || 0;
+
+            $('#availableBalance').val(availableBalance);
+            $('#fromDate').val(localStorage.getItem("fromDate"));
+            $('#toDate').val(localStorage.getItem("toDate"));
+            $('#currentBalance').text(availableBalance.toFixed(2));
+            $('#totalAmount').text(total.toFixed(2));
+            $('#expenseList').html(localStorage.getItem("expenseList"));
+            $('#daysRemaining').text(daysRemaining);
+            updateDailyLimit();
             
             function updateDaysRemaining() {
                 let fromDate = new Date($('#fromDate').val());
