@@ -23,6 +23,7 @@
         <label>From Date: <input type="date" id="fromDate"></label>
         <label>To Date: <input type="date" id="toDate"></label>
         <button id="setBalance">Set Balance</button>
+        <button id="clearBalance">Clear Balance</button>
         <p class="total">Available Balance: ₹<span id="currentBalance">0</span></p>
         <p class="total">Days Remaining: <span id="daysRemaining">0</span></p>
         <p class="total">Daily Spend Limit: ₹<span id="dailyLimit">0</span></p>
@@ -90,35 +91,10 @@
                 updateDailyLimit();
             }
             
-            if (localStorage.getItem("availableBalance")) {
-                availableBalance = parseFloat(localStorage.getItem("availableBalance"));
-                $('#availableBalance').val(availableBalance);
-                $('#currentBalance').text(availableBalance.toFixed(2));
-            }
-            
-            if (localStorage.getItem("fromDate")) {
-                $('#fromDate').val(localStorage.getItem("fromDate"));
-            }
-            
-            if (localStorage.getItem("toDate")) {
-                $('#toDate').val(localStorage.getItem("toDate"));
-            }
-            
-            if (localStorage.getItem("totalSpent")) {
-                total = parseFloat(localStorage.getItem("totalSpent"));
-                $('#totalAmount').text(total.toFixed(2));
-            }
-            
-            if (localStorage.getItem("daysRemaining")) {
-                daysRemaining = parseInt(localStorage.getItem("daysRemaining"));
-                $('#daysRemaining').text(daysRemaining);
-            }
-            
-            if (localStorage.getItem("expenseList")) {
-                $('#expenseList').html(localStorage.getItem("expenseList"));
-            }
-            
-            updateDailyLimit();
+            $('#clearBalance').click(function() {
+                localStorage.clear();
+                location.reload();
+            });
             
             $('#setBalance').click(function() {
                 availableBalance = parseFloat($('#availableBalance').val());
