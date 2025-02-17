@@ -28,7 +28,7 @@
         <p class="total">Days Remaining: <span id="daysRemaining">0</span></p>
         <p class="total">Daily Spend Limit: ₹<span id="dailyLimit">0</span></p>
         <input type="text" id="expenseName" placeholder="Expense Name">
-        <input type="number" id="expenseAmount" placeholder="Amount">
+        <input type="number" id="expenseAmount" placeholder="Amount" step="any">
         <select id="expenseCategory">
             <option value="Essentials">Essentials</option>
             <option value="Public Transport">Public Transport</option>
@@ -110,17 +110,25 @@
             $('#fromDate, #toDate').change(updateDaysRemaining);
             
             $('#addExpense').click(function() {
-                let name = $('#expenseName').val();
-                let amount = parseFloat($('#expenseAmount').val());
-                let category = $('#expenseCategory').val();
-                if (name && !isNaN(amount) && amount > 0) {
-                    $('#expenseList').append(`<tr><td>${name}</td><td>₹${amount.toFixed(2)}</td><td>${category}</td><td><button class='deleteExpense'>Delete</button></td></tr>`);
-                    total += amount;
-                    availableBalance -= amount;
-                    updateExpenseList();
-                    $('#expenseName').val('');
-                    $('#expenseAmount').val('');
+                let name = $('#expenseName').val().trim();
+                let amount = $('#expenseAmount').val().trim();
+                if (!name) {
+                    alert("Expense name is required.");
+                    return;
                 }
+                if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+                    alert("Valid amount is required.");
+                    return;
+                }
+                amount = parseFloat(amount);
+                let category = $('#expenseCategory').val();
+                
+                $('#expenseList').append(`<tr><td>${name}</td><td>₹${amount.toFixed(2)}</td><td>${category}</td><td><button class='deleteExpense'>Delete</button></td></tr>`);
+                total += amount;
+                availableBalance -= amount;
+                updateExpenseList();
+                $('#expenseName').val('');
+                $('#expenseAmount').val('');
             });
             
             $(document).on('click', '.deleteExpense', function() {
