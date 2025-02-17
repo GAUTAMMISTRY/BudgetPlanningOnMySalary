@@ -81,6 +81,16 @@
                 }
             }
             
+            function updateExpenseList() {
+                localStorage.setItem("expenseList", $('#expenseList').html());
+                localStorage.setItem("totalSpent", total);
+                $('#totalAmount').text(total.toFixed(2));
+                availableBalance -= total;
+                $('#currentBalance').text(availableBalance.toFixed(2));
+                localStorage.setItem("availableBalance", availableBalance);
+                updateDailyLimit();
+            }
+            
             if (localStorage.getItem("availableBalance")) {
                 availableBalance = parseFloat(localStorage.getItem("availableBalance"));
                 $('#availableBalance').val(availableBalance);
@@ -123,6 +133,27 @@
             });
             
             $('#fromDate, #toDate').change(updateDaysRemaining);
+            
+            $('#addExpense').click(function() {
+                let name = $('#expenseName').val();
+                let amount = parseFloat($('#expenseAmount').val());
+                let category = $('#expenseCategory').val();
+                if (name && !isNaN(amount) && amount > 0) {
+                    $('#expenseList').append(`<tr><td>${name}</td><td>₹${amount.toFixed(2)}</td><td>${category}</td><td><button class='deleteExpense'>Delete</button></td></tr>`);
+                    total += amount;
+                    updateExpenseList();
+                    $('#expenseName').val('');
+                    $('#expenseAmount').val('');
+                }
+            });
+            
+            $(document).on('click', '.deleteExpense', function() {
+                let row = $(this).closest('tr');
+                let amount = parseFloat(row.find('td:nth-child(2)').text().replace('₹', ''));
+                total -= amount;
+                row.remove();
+                updateExpenseList();
+            });
         });
     </script>
 </body>
