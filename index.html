@@ -5,59 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Budgeting App</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .container { max-width: 400px; margin: auto; }
-        input, select, button { width: 100%; margin: 5px 0; padding: 8px; }
-        table { width: 100%; margin-top: 10px; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f4f4f4; }
-        .total { font-weight: bold; margin-top: 10px; }
-        .footer { text-align: center; margin-top: 20px; padding: 10px; background: #f4f4f4; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <h2>Smart Budgeting App</h2>
-        <p>Prioritize Essentials, Use Public Transport, Eat at Home, and Track Expenses</p>
-        <input type="number" id="availableBalance" placeholder="Enter Available Balance">
-        <label>From Date: <input type="date" id="fromDate"></label>
-        <label>To Date: <input type="date" id="toDate"></label>
-        <button id="setBalance">Set Balance</button>
-        <button id="clearBalance">Clear Balance</button>
-        <p class="total">Available Balance: ₹<span id="currentBalance">0</span></p>
-        <p class="total">Days Remaining: <span id="daysRemaining">0</span></p>
-        <p class="total">Daily Spend Limit: ₹<span id="dailyLimit">0</span></p>
-        <input type="text" id="expenseName" placeholder="Expense Name">
-        <input type="number" id="expenseAmount" placeholder="Amount" step="any">
-        <select id="expenseCategory">
-            <option value="Essentials">Essentials</option>
-            <option value="Public Transport">Public Transport</option>
-            <option value="Eat at Home">Eat at Home</option>
-            <option value="Groceries">Groceries</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="Healthcare">Healthcare</option>
-            <option value="Bills & Utilities">Bills & Utilities</option>
-            <option value="Savings">Savings</option>
-            <option value="Other">Other</option>
-        </select>
-        <button id="addExpense">Add Expense</button>
+<body class="bg-gray-100 text-gray-900">
+    <div class="max-w-lg mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
+        <h2 class="text-2xl font-bold text-center">Smart Budgeting App</h2>
+        <p class="text-center text-gray-600">Prioritize Essentials, Use Public Transport, Eat at Home, and Track Expenses</p>
         
-        <table>
+        <div class="mt-4">
+            <input type="number" id="availableBalance" placeholder="Enter Available Balance" class="w-full p-2 border rounded">
+            <label class="block mt-2">From Date: <input type="date" id="fromDate" class="p-2 border rounded w-full"></label>
+            <label class="block mt-2">To Date: <input type="date" id="toDate" class="p-2 border rounded w-full"></label>
+            <button id="setBalance" class="w-full mt-2 bg-blue-500 text-white p-2 rounded">Set Balance</button>
+            <button id="clearBalance" class="w-full mt-2 bg-red-500 text-white p-2 rounded">Clear Balance</button>
+        </div>
+
+        <div class="mt-4">
+            <p class="font-bold">Available Balance: ₹<span id="currentBalance">0</span></p>
+            <p class="font-bold">Days Remaining: <span id="daysRemaining">0</span></p>
+            <p class="font-bold">Daily Spend Limit: ₹<span id="dailyLimit">0</span></p>
+        </div>
+
+        <div class="mt-4">
+            <input type="text" id="expenseName" placeholder="Expense Name" class="w-full p-2 border rounded">
+            <input type="number" id="expenseAmount" placeholder="Amount" step="any" class="w-full p-2 border rounded mt-2">
+            <select id="expenseCategory" class="w-full p-2 border rounded mt-2">
+                <option value="Essentials">Essentials</option>
+                <option value="Public Transport">Public Transport</option>
+                <option value="Eat at Home">Eat at Home</option>
+                <option value="Groceries">Groceries</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="Bills & Utilities">Bills & Utilities</option>
+                <option value="Savings">Savings</option>
+                <option value="Other">Other</option>
+            </select>
+            <button id="addExpense" class="w-full mt-2 bg-green-500 text-white p-2 rounded">Add Expense</button>
+        </div>
+
+        <table class="w-full mt-4 border rounded-lg bg-white shadow-md">
             <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Amount</th>
-                    <th>Category</th>
-                    <th>Action</th>
+                <tr class="bg-gray-200">
+                    <th class="p-2">Name</th>
+                    <th class="p-2">Amount</th>
+                    <th class="p-2">Category</th>
+                    <th class="p-2">Action</th>
                 </tr>
             </thead>
-            <tbody id="expenseList"></tbody>
+            <tbody id="expenseList" class="text-center"></tbody>
         </table>
-        <p class="total">Total Spent: ₹<span id="totalAmount">0</span></p>
+        <p class="font-bold mt-4">Total Spent: ₹<span id="totalAmount">0</span></p>
     </div>
     
-    <div class="footer">Developed by Swatam</div>
+    <div class="text-center mt-10 text-gray-600">Developed by Swatam</div>
     
     <script>
         $(document).ready(function() {
@@ -135,7 +135,7 @@
                 amount = parseFloat(amount);
                 let category = $('#expenseCategory').val();
                 
-                $('#expenseList').append(`<tr><td>${name}</td><td>₹${amount.toFixed(2)}</td><td>${category}</td><td><button class='deleteExpense'>Delete</button></td></tr>`);
+                $('#expenseList').append(`<tr><td>${name}</td><td>₹${amount.toFixed(2)}</td><td>${category}</td><td><button class='deleteExpense bg-red-500 text-white px-2 py-1 rounded'>Delete</button></td></tr>`);
                 total += amount;
                 availableBalance -= amount;
                 updateExpenseList();
