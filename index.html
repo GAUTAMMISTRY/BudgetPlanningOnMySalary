@@ -193,30 +193,49 @@
       });
 
       $('#recalculateToday').click(function () {
-        const toDateVal = $('#toDate').val();
-        if (!toDateVal) {
-          $('#previewResult').html("Please set a valid To Date first.");
-          return;
-        }
+  const toDateVal = $('#toDate').val();
+  if (!toDateVal) {
+    $('#previewResult').html("Please set a valid To Date first.");
+    return;
+  }
 
-        const toDate = new Date(toDateVal);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+  const toDate = new Date(toDateVal);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-        if (toDate <= today) {
-          $('#previewResult').html("To Date must be in the future.");
-          return;
-        }
+  if (toDate <= today) {
+    $('#previewResult').html("To Date must be in the future.");
+    return;
+  }
 
-        const previewDays = Math.ceil((toDate - today) / (1000 * 60 * 60 * 24));
-        const previewBalance = parseFloat(localStorage.getItem("availableBalance")) || 0;
-        const previewLimit = previewDays > 0 ? (previewBalance / previewDays).toFixed(2) : 0;
+  // Find first expense date if exists
+  let firstExpenseDate = null;
+  $('#expenseList tr').each(function () {
+    const dateAttr = $(this).attr('data-date');
+    if (dateAttr) {
+      const d = new Date(dateAttr);
+      if (!firstExpenseDate || d < firstExpenseDate) {
+        firstExpenseDate = d;
+      }
+    }
+  });
 
-        $('#previewResult').html(
-          `Preview (from Today): <br>Days Remaining: <strong>${previewDays}</strong>, 
-           Daily Limit: <strong>₹${previewLimit}</strong>`
-        );
-      });
+  let previewFromDate = today;
+  if (firstExpenseDate && firstExpenseDate > today) {
+    previewFromDate = firstExpenseDate;
+  }
+
+  const previewDays = Math.ceil((toDate - previewFromDate) / (1000 * 60 * 60 * 24));
+  const previewBalance = parseFloat(localStorage.getItem("availableBalance")) || 0;
+  const previewLimit = previewDays > 0 ? (previewBalance / previewDays).toFixed(2) : 0;
+
+  $('#previewResult').html(
+    `Preview From Date: <strong>${previewFromDate.toISOString().split('T')[0]}</strong><br>
+     Days Remaining: <strong>${previewDays}</strong><br>
+     Daily Limit: <strong>₹${previewLimit}</strong><br>
+     <span class="text-xs text-gray-500 italic">This is a preview. Stored data is not changed.</span>`
+  );
+});
     });
   </script>
 </body>
