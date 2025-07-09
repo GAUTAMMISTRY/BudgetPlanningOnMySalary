@@ -77,8 +77,13 @@
       function updateDaysRemaining() {
         let fromDate = new Date($('#fromDate').val());
         let toDate = new Date($('#toDate').val());
-        if (!isNaN(fromDate) && !isNaN(toDate) && toDate > fromDate) {
-          daysRemaining = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24));
+
+        if (!isNaN(fromDate) && !isNaN(toDate) && toDate >= fromDate) {
+          // Inclusive date calculation
+          let msPerDay = 1000 * 60 * 60 * 24;
+          let dayDiff = Math.floor((toDate - fromDate) / msPerDay) + 1;
+          daysRemaining = dayDiff;
+
           $('#daysRemaining').text(daysRemaining);
           localStorage.setItem("daysRemaining", daysRemaining);
           updateDailyLimit();
