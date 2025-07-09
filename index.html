@@ -29,6 +29,13 @@
       <p class="font-bold">Daily Spend Limit: ₹<span id="dailyLimit">0</span></p>
     </div>
 
+    <div class="mt-2">
+      <button id="recalculateToday" class="w-full bg-indigo-500 text-white p-2 rounded">
+        Recalculate from Today (Preview Only)
+      </button>
+      <div id="previewResult" class="mt-2 text-sm text-gray-700 font-semibold"></div>
+    </div>
+
     <div class="mt-4">
       <input type="text" id="expenseName" placeholder="Expense Name" class="w-full p-2 border rounded">
       <input type="number" id="expenseAmount" placeholder="Amount" step="any" class="w-full p-2 border rounded mt-2">
@@ -58,14 +65,6 @@
       <tbody id="expenseList" class="text-center"></tbody>
     </table>
     <p class="font-bold mt-4">Total Spent: ₹<span id="totalAmount">0</span></p>
-
-    <div class="mt-4 flex justify-between gap-2">
-      <button id="downloadData" class="w-1/2 bg-yellow-500 text-white p-2 rounded">Back (Download)</button>
-      <label class="w-1/2 bg-purple-500 text-white p-2 rounded text-center cursor-pointer">
-        Restore
-        <input type="file" id="uploadData" accept=".txt" class="hidden">
-      </label>
-    </div>
   </div>
 
   <div class="text-center mt-10 text-gray-600">Developed by Swatam</div>
@@ -86,43 +85,40 @@
       $('#currentBalance').text(availableBalance.toFixed(2));
       $('#totalAmount').text(total.toFixed(2));
       $('#expenseList').html(localStorage.getItem("expenseList"));
-
-      updateDaysRemaining();
+      $('#daysRemaining').text(daysRemaining);
+      updateDailyLimit();
 
       function updateDaysRemaining() {
+        let fromDate = new Date($('#fromDate').val());
         let toDate = new Date($('#toDate').val());
-        let fromDate;
 
-        const expenseRows = $('#expenseList tr');
-        if (expenseRows.length > 0) {
-          let earliestDate = null;
-          expenseRows.each(function () {
-            const dateStr = $(this).attr("data-date");
-            if (dateStr) {
-              const date = new Date(dateStr);
-              if (!earliestDate || date < earliestDate) {
-                earliestDate = date;
-              }
+        // Check if expense list has dates
+        let firstExpenseDate = null;
+        $('#expenseList tr').each(function () {
+          const dateAttr = $(this).attr('data-date');
+          if (dateAttr) {
+            const d = new Date(dateAttr);
+            if (!firstExpenseDate || d < firstExpenseDate) {
+              firstExpenseDate = d;
             }
-          });
-          if (earliestDate) {
-            fromDate = earliestDate;
           }
-        }
+        });
 
-        if (!fromDate) {
-          const todayStr = new Date().toISOString().split("T")[0];
-          fromDate = new Date(todayStr);
-        }
+        if (!isNaN(toDate)) {
+          let baseFromDate = fromDate;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
 
-        if (!isNaN(fromDate) && !isNaN(toDate) && toDate > fromDate) {
-          daysRemaining = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24));
+          if (firstExpenseDate) {
+            baseFromDate = firstExpenseDate;
+          } else if (today > fromDate) {
+            baseFromDate = today;
+          }
+
+          daysRemaining = Math.ceil((toDate - baseFromDate) / (1000 * 60 * 60 * 24));
           $('#daysRemaining').text(daysRemaining);
           localStorage.setItem("daysRemaining", daysRemaining);
           updateDailyLimit();
-        } else {
-          $('#daysRemaining').text("0");
-          $('#dailyLimit').text("0");
         }
       }
 
@@ -141,7 +137,7 @@
         $('#totalAmount').text(total.toFixed(2));
         $('#currentBalance').text(availableBalance.toFixed(2));
         localStorage.setItem("availableBalance", availableBalance);
-        updateDaysRemaining();
+        updateDailyLimit();
       }
 
       $('#clearBalance').click(function () {
@@ -175,9 +171,11 @@
         }
         amount = parseFloat(amount);
         let category = $('#expenseCategory').val();
-        let today = new Date().toISOString().split("T")[0];
+        let today = new Date().toISOString().split('T')[0];
 
-        $('#expenseList').append(`<tr data-date="${today}"><td>${name}</td><td>₹${amount.toFixed(2)}</td><td>${category}</td><td><button class='deleteExpense bg-red-500 text-white px-2 py-1 rounded'>Delete</button></td></tr>`);
+        $('#expenseList').append(
+          `<tr data-date="${today}"><td>${name}</td><td>₹${amount.toFixed(2)}</td><td>${category}</td><td><button class='deleteExpense bg-red-500 text-white px-2 py-1 rounded'>Delete</button></td></tr>`
+        );
         total += amount;
         availableBalance -= amount;
         updateExpenseList();
@@ -194,46 +192,30 @@
         updateExpenseList();
       });
 
-      // Download localStorage to text
-      $('#downloadData').click(function () {
-        const data = {
-          availableBalance: localStorage.getItem("availableBalance"),
-          fromDate: localStorage.getItem("fromDate"),
-          toDate: localStorage.getItem("toDate"),
-          expenseList: localStorage.getItem("expenseList"),
-          totalSpent: localStorage.getItem("totalSpent"),
-          daysRemaining: localStorage.getItem("daysRemaining")
-        };
-        const blob = new Blob([JSON.stringify(data)], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'budget_backup.txt';
-        a.click();
-        URL.revokeObjectURL(url);
-      });
+      $('#recalculateToday').click(function () {
+        const toDateVal = $('#toDate').val();
+        if (!toDateVal) {
+          $('#previewResult').html("Please set a valid To Date first.");
+          return;
+        }
 
-      // Restore from uploaded file
-      $('#uploadData').change(function (event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          try {
-            const data = JSON.parse(e.target.result);
-            localStorage.setItem("availableBalance", data.availableBalance || "0");
-            localStorage.setItem("fromDate", data.fromDate || "");
-            localStorage.setItem("toDate", data.toDate || "");
-            localStorage.setItem("expenseList", data.expenseList || "");
-            localStorage.setItem("totalSpent", data.totalSpent || "0");
-            localStorage.setItem("daysRemaining", data.daysRemaining || "0");
-            alert("Data restored successfully!");
-            location.reload();
-          } catch (err) {
-            alert("Failed to restore. Invalid file format.");
-          }
-        };
-        reader.readAsText(file);
+        const toDate = new Date(toDateVal);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (toDate <= today) {
+          $('#previewResult').html("To Date must be in the future.");
+          return;
+        }
+
+        const previewDays = Math.ceil((toDate - today) / (1000 * 60 * 60 * 24));
+        const previewBalance = parseFloat(localStorage.getItem("availableBalance")) || 0;
+        const previewLimit = previewDays > 0 ? (previewBalance / previewDays).toFixed(2) : 0;
+
+        $('#previewResult').html(
+          `Preview (from Today): <br>Days Remaining: <strong>${previewDays}</strong>, 
+           Daily Limit: <strong>₹${previewLimit}</strong>`
+        );
       });
     });
   </script>
