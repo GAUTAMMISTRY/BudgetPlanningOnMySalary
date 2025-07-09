@@ -1,222 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Budgeting App</title>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/fireworks-js@latest/dist/index.umd.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-900">
+  <div class="max-w-lg mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
+    <h2 class="text-2xl font-bold text-center">Smart Budgeting App</h2>
+    <p class="text-center text-gray-600">Track your expenses wisely</p>
 
-<canvas id="fireworksCanvas" class="fixed top-0 left-0 w-full h-full pointer-events-none"></canvas>
+    <div class="mt-4">
+      <input type="number" id="availableBalance" placeholder="Enter Available Balance" class="w-full p-2 border rounded">
+      <label class="block mt-2">From Date: <input type="date" id="fromDate" class="p-2 border rounded w-full"></label>
+      <label class="block mt-2">To Date: <input type="date" id="toDate" class="p-2 border rounded w-full"></label>
+      <button id="setBalance" class="w-full mt-2 bg-blue-500 text-white p-2 rounded">Set Balance</button>
+      <button id="clearBalance" class="w-full mt-2 bg-red-500 text-white p-2 rounded">Clear Balance</button>
+      <button id="recalculateToday" class="w-full mt-2 bg-yellow-500 text-white p-2 rounded">Recalculate From Today (Preview)</button>
+    </div>
 
-<div class="max-w-lg mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
-  <h2 class="text-2xl font-bold text-center">Smart Budgeting App</h2>
-  <p class="text-center text-gray-600">Prioritize Essentials, Use Public Transport, Eat at Home, and Track Expenses</p>
+    <div class="mt-4">
+      <p class="font-bold">Available Balance: ₹<span id="currentBalance">0</span></p>
+      <p class="font-bold">Days Remaining: <span id="daysRemaining">0</span></p>
+      <p class="font-bold">Daily Spend Limit: ₹<span id="dailyLimit">0</span></p>
+    </div>
 
-  <div class="mt-4">
-    <input type="number" id="availableBalance" placeholder="Enter Available Balance" class="w-full p-2 border rounded">
-    <label class="block mt-2">From Date: <input type="date" id="fromDate" class="p-2 border rounded w-full"></label>
-    <label class="block mt-2">To Date: <input type="date" id="toDate" class="p-2 border rounded w-full"></label>
-    <button id="setBalance" class="w-full mt-2 bg-blue-500 text-white p-2 rounded">Set Balance</button>
-    <button id="clearBalance" class="w-full mt-2 bg-red-500 text-white p-2 rounded">Clear Balance</button>
-    <button id="recalculateToday" class="w-full mt-2 bg-yellow-500 text-white p-2 rounded">Recalculate from Today (Preview Only)</button>
+    <div class="mt-4">
+      <input type="text" id="expenseName" placeholder="Expense Name" class="w-full p-2 border rounded">
+      <input type="number" id="expenseAmount" placeholder="Amount" class="w-full p-2 border rounded mt-2">
+      <input type="date" id="expenseDate" class="w-full p-2 border rounded mt-2">
+      <button id="addExpense" class="w-full mt-2 bg-green-500 text-white p-2 rounded">Add Expense</button>
+    </div>
+
+    <table class="w-full mt-4 border rounded-lg bg-white shadow-md">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="p-2">Name</th>
+          <th class="p-2">Amount</th>
+          <th class="p-2">Date</th>
+          <th class="p-2">Action</th>
+        </tr>
+      </thead>
+      <tbody id="expenseList" class="text-center"></tbody>
+    </table>
+
+    <p class="font-bold mt-4">Total Spent: ₹<span id="totalAmount">0</span></p>
+    <div id="previewOutput" class="mt-4 text-sm text-gray-700"></div>
   </div>
 
-  <div id="previewResult" class="mt-4 text-sm text-gray-800 bg-yellow-100 p-3 rounded hidden"></div>
+  <script>
+    $(document).ready(function () {
+      let total = parseFloat(localStorage.getItem("totalSpent")) || 0;
+      let availableBalance = parseFloat(localStorage.getItem("availableBalance")) || 0;
 
-  <div class="mt-4">
-    <p class="font-bold">Available Balance: ₹<span id="currentBalance">0</span></p>
-    <p class="font-bold">Days Remaining: <span id="daysRemaining">0</span></p>
-    <p class="font-bold">Daily Spend Limit: ₹<span id="dailyLimit">0</span></p>
-  </div>
-
-  <div class="mt-4">
-    <input type="text" id="expenseName" placeholder="Expense Name" class="w-full p-2 border rounded">
-    <input type="number" id="expenseAmount" placeholder="Amount" step="any" class="w-full p-2 border rounded mt-2">
-    <select id="expenseCategory" class="w-full p-2 border rounded mt-2">
-      <option value="Essentials">Essentials</option>
-      <option value="Public Transport">Public Transport</option>
-      <option value="Eat at Home">Eat at Home</option>
-      <option value="Groceries">Groceries</option>
-      <option value="Entertainment">Entertainment</option>
-      <option value="Healthcare">Healthcare</option>
-      <option value="Bills & Utilities">Bills & Utilities</option>
-      <option value="Savings">Savings</option>
-      <option value="Other">Other</option>
-    </select>
-    <button id="addExpense" class="w-full mt-2 bg-green-500 text-white p-2 rounded">Add Expense</button>
-  </div>
-
-  <table class="w-full mt-4 border rounded-lg bg-white shadow-md">
-    <thead>
-      <tr class="bg-gray-200">
-        <th class="p-2">Name</th>
-        <th class="p-2">Amount</th>
-        <th class="p-2">Category</th>
-        <th class="p-2">Action</th>
-      </tr>
-    </thead>
-    <tbody id="expenseList" class="text-center"></tbody>
-  </table>
-
-  <p class="font-bold mt-4">Total Spent: ₹<span id="totalAmount">0</span></p>
-</div>
-
-<div class="text-center mt-10 text-gray-600">Developed by Swatam</div>
-
-<script>
-  $(document).ready(function () {
-    const fireworks = new Fireworks.default(document.getElementById('fireworksCanvas'));
-    fireworks.start();
-    setTimeout(() => fireworks.stop(), 3000);
-
-    let total = parseFloat(localStorage.getItem("totalSpent")) || 0;
-    let availableBalance = parseFloat(localStorage.getItem("availableBalance")) || 0;
-    let daysRemaining = parseInt(localStorage.getItem("daysRemaining")) || 0;
-
-    $('#availableBalance').val(availableBalance);
-    $('#fromDate').val(localStorage.getItem("fromDate"));
-    $('#toDate').val(localStorage.getItem("toDate"));
-    $('#currentBalance').text(availableBalance.toFixed(2));
-    $('#totalAmount').text(total.toFixed(2));
-    $('#expenseList').html(localStorage.getItem("expenseList"));
-    $('#daysRemaining').text(daysRemaining);
-    updateDailyLimit();
-
-    function updateDaysRemaining() {
-      let fromDate = new Date($('#fromDate').val());
-      let toDate = new Date($('#toDate').val());
-      if (!isNaN(fromDate) && !isNaN(toDate) && toDate >= fromDate) {
-        daysRemaining = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)) + 1;
-        $('#daysRemaining').text(daysRemaining);
-        localStorage.setItem("daysRemaining", daysRemaining);
-        updateDailyLimit();
-      }
-    }
-
-    function updateDailyLimit() {
-      if (daysRemaining > 0) {
-        let dailyLimit = availableBalance / daysRemaining;
-        $('#dailyLimit').text(dailyLimit.toFixed(2));
-      } else {
-        $('#dailyLimit').text("0");
-      }
-    }
-
-    function updateExpenseList() {
-      localStorage.setItem("expenseList", $('#expenseList').html());
-      localStorage.setItem("totalSpent", total);
-      $('#totalAmount').text(total.toFixed(2));
+      $('#availableBalance').val(availableBalance);
+      $('#fromDate').val(localStorage.getItem("fromDate"));
+      $('#toDate').val(localStorage.getItem("toDate"));
       $('#currentBalance').text(availableBalance.toFixed(2));
-      localStorage.setItem("availableBalance", availableBalance);
-      updateDailyLimit();
-    }
-
-    $('#clearBalance').click(function () {
-      localStorage.clear();
-      location.reload();
-    });
-
-    $('#setBalance').click(function () {
-      availableBalance = parseFloat($('#availableBalance').val());
-      if (!isNaN(availableBalance) && availableBalance >= 0) {
-        $('#currentBalance').text(availableBalance.toFixed(2));
-        localStorage.setItem("availableBalance", availableBalance);
-      }
-      localStorage.setItem("fromDate", $('#fromDate').val());
-      localStorage.setItem("toDate", $('#toDate').val());
+      $('#totalAmount').text(total.toFixed(2));
+      $('#expenseList').html(localStorage.getItem("expenseList"));
       updateDaysRemaining();
-    });
 
-    $('#fromDate, #toDate').change(updateDaysRemaining);
-
-    $('#addExpense').click(function () {
-      let name = $('#expenseName').val().trim();
-      let amount = $('#expenseAmount').val().trim();
-      if (!name) {
-        alert("Expense name is required.");
-        return;
-      }
-      if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-        alert("Valid amount is required.");
-        return;
-      }
-      amount = parseFloat(amount);
-      let category = $('#expenseCategory').val();
-      let expenseDate = new Date().toISOString().split('T')[0];
-
-      $('#expenseList').append(`<tr data-date="${expenseDate}"><td>${name}</td><td>₹${amount.toFixed(2)}</td><td>${category}</td><td><button class='deleteExpense bg-red-500 text-white px-2 py-1 rounded'>Delete</button></td></tr>`);
-      total += amount;
-      availableBalance -= amount;
-      updateExpenseList();
-      $('#expenseName').val('');
-      $('#expenseAmount').val('');
-    });
-
-    $(document).on('click', '.deleteExpense', function () {
-      let row = $(this).closest('tr');
-      let amount = parseFloat(row.find('td:nth-child(2)').text().replace('₹', ''));
-      total -= amount;
-      availableBalance += amount;
-      row.remove();
-      updateExpenseList();
-    });
-
-    $('#recalculateToday').click(function () {
-      const toDateVal = $('#toDate').val();
-      if (!toDateVal) {
-        $('#previewResult').html("Please set a valid To Date first.").removeClass('hidden');
-        return;
-      }
-
-      const toDate = new Date(toDateVal);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      toDate.setHours(0, 0, 0, 0);
-
-      if (toDate < today) {
-        $('#previewResult').html("To Date must be today or in the future.").removeClass('hidden');
-        return;
-      }
-
-      const oneDay = 1000 * 60 * 60 * 24;
-      const totalDays = Math.ceil((toDate - today) / oneDay) + 1;
-
-      let spent = 0;
-      $('#expenseList tr').each(function () {
-        const dateAttr = $(this).attr('data-date');
-        if (dateAttr) {
-          const expenseDate = new Date(dateAttr);
-          expenseDate.setHours(0, 0, 0, 0);
-          if (expenseDate >= today && expenseDate <= toDate) {
-            const amountText = $(this).find('td:nth-child(2)').text().replace(/[₹,]/g, '');
-            const amount = parseFloat(amountText);
-            if (!isNaN(amount)) {
-              spent += amount;
-            }
-          }
+      function updateDaysRemaining() {
+        let fromDate = new Date($('#fromDate').val());
+        let toDate = new Date($('#toDate').val());
+        if (!isNaN(fromDate) && !isNaN(toDate)) {
+          let days = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)) + 1;
+          $('#daysRemaining').text(days);
+          let limit = availableBalance / days;
+          $('#dailyLimit').text(limit.toFixed(2));
         }
+      }
+
+      function updateLocalStorage() {
+        localStorage.setItem("availableBalance", availableBalance);
+        localStorage.setItem("fromDate", $('#fromDate').val());
+        localStorage.setItem("toDate", $('#toDate').val());
+        localStorage.setItem("totalSpent", total);
+        localStorage.setItem("expenseList", $('#expenseList').html());
+      }
+
+      $('#setBalance').click(function () {
+        availableBalance = parseFloat($('#availableBalance').val());
+        localStorage.setItem("availableBalance", availableBalance);
+        updateDaysRemaining();
+        updateLocalStorage();
       });
 
-      const originalBalance = parseFloat(localStorage.getItem("availableBalance")) || 0;
-      const remainingBalance = originalBalance - spent;
-      const dailyLimit = totalDays > 0 ? (remainingBalance / totalDays).toFixed(2) : "0.00";
+      $('#clearBalance').click(function () {
+        localStorage.clear();
+        location.reload();
+      });
 
-      $('#previewResult').html(
-        `Preview From Date: <strong>${today.toISOString().split('T')[0]}</strong><br>
-         To Date: <strong>${toDate.toISOString().split('T')[0]}</strong><br>
-         Total Days: <strong>${totalDays}</strong><br>
-         Expenses Already Made: <strong>₹${spent.toFixed(2)}</strong><br>
-         Remaining Balance: <strong>₹${remainingBalance.toFixed(2)}</strong><br>
-         New Daily Limit: <strong>₹${dailyLimit}</strong><br>
-         <span class="text-xs text-gray-500 italic">This is a preview only. No data was changed.</span>`
-      ).removeClass('hidden');
+      $('#addExpense').click(function () {
+        const name = $('#expenseName').val();
+        const amount = parseFloat($('#expenseAmount').val());
+        const date = $('#expenseDate').val();
+
+        if (!name || isNaN(amount) || !date) {
+          alert("Enter valid expense details.");
+          return;
+        }
+
+        total += amount;
+        availableBalance -= amount;
+
+        $('#expenseList').append(`<tr>
+          <td>${name}</td>
+          <td>₹${amount.toFixed(2)}</td>
+          <td>${date}</td>
+          <td><button class="deleteExpense bg-red-500 text-white px-2 py-1 rounded">Delete</button></td>
+        </tr>`);
+
+        updateDaysRemaining();
+        updateLocalStorage();
+        $('#expenseName, #expenseAmount, #expenseDate').val('');
+      });
+
+      $(document).on('click', '.deleteExpense', function () {
+        const row = $(this).closest('tr');
+        const amt = parseFloat(row.find('td:nth-child(2)').text().replace('₹', ''));
+        total -= amt;
+        availableBalance += amt;
+        row.remove();
+        updateDaysRemaining();
+        updateLocalStorage();
+      });
+
+      $('#recalculateToday').click(function () {
+        const today = new Date();
+        const todayStr = today.toLocaleDateString('en-CA'); // yyyy-mm-dd
+        const todayDate = new Date(todayStr);
+        const toDateVal = $('#toDate').val();
+        const toDate = new Date(toDateVal);
+
+        if (isNaN(toDate)) {
+          alert("Please set a valid To Date.");
+          return;
+        }
+
+        toDate.setHours(0, 0, 0, 0);
+        const oneDay = 1000 * 60 * 60 * 24;
+        const totalDays = Math.ceil((toDate - todayDate) / oneDay) + 1;
+
+        let totalSpent = 0;
+        $('#expenseList tr').each(function () {
+          const date = new Date($(this).find('td:nth-child(3)').text());
+          if (date >= todayDate && date <= toDate) {
+            const amt = parseFloat($(this).find('td:nth-child(2)').text().replace('₹', '')) || 0;
+            totalSpent += amt;
+          }
+        });
+
+        const remaining = availableBalance - totalSpent;
+        const dailyLimit = remaining / totalDays;
+
+        $('#previewOutput').html(`
+          <hr class="my-2">
+          <p><strong>Preview From Date:</strong> ${todayStr}</p>
+          <p><strong>To Date:</strong> ${toDateVal}</p>
+          <p><strong>Total Days:</strong> ${totalDays}</p>
+          <p><strong>Expenses Already Made:</strong> ₹${totalSpent.toFixed(2)}</p>
+          <p><strong>Remaining Balance:</strong> ₹${remaining.toFixed(2)}</p>
+          <p><strong>New Daily Limit:</strong> ₹${dailyLimit.toFixed(2)}</p>
+          <p class="text-red-500 text-sm mt-1">This is a preview only. No data was changed.</p>
+        `);
+      });
     });
-  });
-</script>
-
+  </script>
 </body>
 </html>
