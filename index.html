@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Budgeting App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -64,13 +64,12 @@
       updateDaysRemaining();
 
       function updateDaysRemaining() {
-        let fromDate = new Date($('#fromDate').val());
-        let toDate = new Date($('#toDate').val());
-        if (!isNaN(fromDate) && !isNaN(toDate)) {
-          let days = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)) + 1;
+        const from = new Date($('#fromDate').val());
+        const to = new Date($('#toDate').val());
+        if (!isNaN(from) && !isNaN(to)) {
+          const days = Math.floor((to - from) / (1000 * 60 * 60 * 24)) + 1;
           $('#daysRemaining').text(days);
-          let limit = availableBalance / days;
-          $('#dailyLimit').text(limit.toFixed(2));
+          $('#dailyLimit').text((availableBalance / days).toFixed(2));
         }
       }
 
@@ -98,7 +97,6 @@
         const name = $('#expenseName').val();
         const amount = parseFloat($('#expenseAmount').val());
         const date = $('#expenseDate').val();
-
         if (!name || isNaN(amount) || !date) {
           alert("Enter valid expense details.");
           return;
@@ -131,40 +129,48 @@
 
       $('#recalculateToday').click(function () {
         const today = new Date();
-        const todayStr = today.toLocaleDateString('en-CA'); // yyyy-mm-dd
-        const todayDate = new Date(todayStr);
-        const toDateVal = $('#toDate').val();
-        const toDate = new Date(toDateVal);
+        today.setHours(0, 0, 0, 0); // ensure local midnight
+        const todayStr = today.toISOString().split('T')[0];
 
-        if (isNaN(toDate)) {
+        const toDateInput = $('#toDate').val();
+        if (!toDateInput) {
           alert("Please set a valid To Date.");
           return;
         }
 
+        const toDate = new Date(toDateInput);
         toDate.setHours(0, 0, 0, 0);
-        const oneDay = 1000 * 60 * 60 * 24;
-        const totalDays = Math.ceil((toDate - todayDate) / oneDay) + 1;
 
-        let totalSpent = 0;
+        if (toDate < today) {
+          alert("To Date must be today or later.");
+          return;
+        }
+
+        const dayDiff = Math.floor((toDate - today) / (1000 * 60 * 60 * 24)) + 1;
+
+        // Sum expenses between today and toDate
+        let spentInRange = 0;
         $('#expenseList tr').each(function () {
-          const date = new Date($(this).find('td:nth-child(3)').text());
-          if (date >= todayDate && date <= toDate) {
-            const amt = parseFloat($(this).find('td:nth-child(2)').text().replace('₹', '')) || 0;
-            totalSpent += amt;
+          const dateStr = $(this).find('td:nth-child(3)').text();
+          const expenseDate = new Date(dateStr);
+          expenseDate.setHours(0, 0, 0, 0);
+          if (expenseDate >= today && expenseDate <= toDate) {
+            const amount = parseFloat($(this).find('td:nth-child(2)').text().replace('₹', ''));
+            spentInRange += amount;
           }
         });
 
-        const remaining = availableBalance - totalSpent;
-        const dailyLimit = remaining / totalDays;
+        const remaining = availableBalance - spentInRange;
+        const newDailyLimit = remaining / dayDiff;
 
         $('#previewOutput').html(`
           <hr class="my-2">
           <p><strong>Preview From Date:</strong> ${todayStr}</p>
-          <p><strong>To Date:</strong> ${toDateVal}</p>
-          <p><strong>Total Days:</strong> ${totalDays}</p>
-          <p><strong>Expenses Already Made:</strong> ₹${totalSpent.toFixed(2)}</p>
+          <p><strong>To Date:</strong> ${toDateInput}</p>
+          <p><strong>Total Days:</strong> ${dayDiff}</p>
+          <p><strong>Expenses Already Made:</strong> ₹${spentInRange.toFixed(2)}</p>
           <p><strong>Remaining Balance:</strong> ₹${remaining.toFixed(2)}</p>
-          <p><strong>New Daily Limit:</strong> ₹${dailyLimit.toFixed(2)}</p>
+          <p><strong>New Daily Limit:</strong> ₹${newDailyLimit.toFixed(2)}</p>
           <p class="text-red-500 text-sm mt-1">This is a preview only. No data was changed.</p>
         `);
       });
