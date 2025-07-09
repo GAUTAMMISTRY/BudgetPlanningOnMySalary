@@ -56,6 +56,15 @@
     </table>
 
     <p class="font-bold mt-4">Total Spent: ₹<span id="totalAmount">0</span></p>
+
+    <div class="mt-4 flex justify-between gap-2">
+    <button id="downloadData" class="w-1/2 bg-yellow-500 text-white p-2 rounded">Backup(Download)</button>
+    <label class="w-1/2 bg-purple-500 text-white p-2 rounded text-center cursor-pointer">
+        Restore
+        <input type="file" id="uploadData" accept=".txt" class="hidden">
+    </label>
+</div>
+    
     <div class="text-center mt-10 text-gray-600">Developed by Swatam</div>
   </div>
 
@@ -147,7 +156,54 @@
         $('#expenseName').val('');
         $('#expenseAmount').val('');
       });
+// Download data
+$('#downloadData').click(function() {
+    const data = {
+        availableBalance: localStorage.getItem("availableBalance"),
+        fromDate: localStorage.getItem("fromDate"),
+        toDate: localStorage.getItem("toDate"),
+        expenseList: localStorage.getItem("expenseList"),
+        totalSpent: localStorage.getItem("totalSpent"),
+        daysRemaining: localStorage.getItem("daysRemaining")
+    };
 
+    const blob = new Blob([JSON.stringify(data)], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'budget_backup.txt';
+    a.click();
+
+    URL.revokeObjectURL(url);
+});
+
+// Restore data
+$('#uploadData').change(function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (typeof data !== 'object') throw new Error("Invalid format");
+
+            localStorage.setItem("availableBalance", data.availableBalance || "0");
+            localStorage.setItem("fromDate", data.fromDate || "");
+            localStorage.setItem("toDate", data.toDate || "");
+            localStorage.setItem("expenseList", data.expenseList || "");
+            localStorage.setItem("totalSpent", data.totalSpent || "0");
+            localStorage.setItem("daysRemaining", data.daysRemaining || "0");
+
+            alert("Data restored successfully!");
+            location.reload();
+        } catch (err) {
+            alert("Failed to restore. Invalid file format.");
+        }
+    };
+    reader.readAsText(file);
+});
       $(document).on('click', '.deleteExpense', function () {
         let row = $(this).closest('tr');
         let amount = parseFloat(row.find('td:nth-child(2)').text().replace('₹', ''));
