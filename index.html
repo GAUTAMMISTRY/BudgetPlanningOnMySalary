@@ -203,17 +203,18 @@
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (toDate <= today) {
-    $('#previewResult').html("To Date must be in the future.");
+  if (toDate < today) {
+    $('#previewResult').html("To Date must be today or in the future.");
     return;
   }
 
-  // Find first expense date if exists
+  // Find first expense date if available
   let firstExpenseDate = null;
   $('#expenseList tr').each(function () {
     const dateAttr = $(this).attr('data-date');
     if (dateAttr) {
       const d = new Date(dateAttr);
+      d.setHours(0, 0, 0, 0);
       if (!firstExpenseDate || d < firstExpenseDate) {
         firstExpenseDate = d;
       }
@@ -221,11 +222,13 @@
   });
 
   let previewFromDate = today;
-  if (firstExpenseDate && firstExpenseDate > today) {
+
+  if (firstExpenseDate && firstExpenseDate >= today) {
     previewFromDate = firstExpenseDate;
   }
 
-  const previewDays = Math.ceil((toDate - previewFromDate) / (1000 * 60 * 60 * 24));
+  const oneDay = 1000 * 60 * 60 * 24;
+  const previewDays = Math.ceil((toDate - previewFromDate) / oneDay) + 1; // +1 to include today
   const previewBalance = parseFloat(localStorage.getItem("availableBalance")) || 0;
   const previewLimit = previewDays > 0 ? (previewBalance / previewDays).toFixed(2) : 0;
 
@@ -233,7 +236,7 @@
     `Preview From Date: <strong>${previewFromDate.toISOString().split('T')[0]}</strong><br>
      Days Remaining: <strong>${previewDays}</strong><br>
      Daily Limit: <strong>₹${previewLimit}</strong><br>
-     <span class="text-xs text-gray-500 italic">This is a preview. Stored data is not changed.</span>`
+     <span class="text-xs text-gray-500 italic">This is a preview only. Local data is not changed.</span>`
   );
 });
     });
